@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>買い物リスト ｜ 東京購物清單</title>
+<style>
+  :root{
+    --paper:#f7f3ea;
+    --paper-line:#e3dcc8;
+    --ink:#1f1b16;
+    --ink-soft:#5b5448;
+    --red:#c0392b;
+    --red-deep:#8e2a1f;
+    --green:#3f6b4a;
+    --gold:#b8893f;
+    --card-bg:#fffdf7;
+    --shadow:rgba(31,27,22,0.12);
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, var(--paper-line) 39px, var(--paper-line) 40px);
+    color:var(--ink);
+    font-family:'Courier New', 'Noto Sans Mono CJK TC', monospace;
+    min-height:100vh;
+    padding-bottom:140px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:28px 20px 20px;
+    text-align:center;
+    border-bottom:3px double var(--ink);
+    background:var(--paper);
+    position:relative;
+  }
+  header::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;height:6px;
+    background:repeating-linear-gradient(45deg, var(--red) 0 10px, var(--paper) 10px 20px);
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:var(--red-deep);
+    text-transform:uppercase;
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  h1{
+    font-family: 'Georgia', serif;
+    font-size:clamp(28px, 5vw, 42px);
+    margin:0;
+    letter-spacing:0.04em;
+    font-weight:900;
+  }
+  h1 .jp{
+    display:block;
+    font-size:0.45em;
+    letter-spacing:0.3em;
+    color:var(--ink-soft);
+    margin-top:6px;
+    font-weight:400;
+  }
+  .meta-row{
+    margin-top:14px;
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .meta-row span b{ color:var(--ink); }
+
+  .select-all-row{
+    margin-top:16px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+  }
+  .select-all-row label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink);
+    cursor:pointer;
+    padding:6px 14px;
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    background:var(--card-bg);
+  }
+  .select-all-row label:hover{ background:#fdf6e3; }
+  .select-all-row input[type="checkbox"]{
+    width:16px; height:16px;
+    accent-color:var(--red-deep);
+    cursor:pointer;
+  }
+
+  /* ---------- Grid ---------- */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 18px 0;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:18px;
+  }
+
+  .card{
+    background:var(--card-bg);
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    box-shadow:3px 3px 0 var(--shadow);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition:transform .15s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .card:hover{
+    transform:translate(-2px,-2px);
+    box-shadow:5px 5px 0 var(--shadow);
+  }
+  .card .tag{
+    position:absolute;
+    top:8px; left:-6px;
+    background:var(--red);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    padding:2px 10px 2px 12px;
+    letter-spacing:0.05em;
+    box-shadow:1px 1px 0 var(--shadow);
+    z-index:2;
+  }
+  .card .tag::after{
+    content:"";
+    position:absolute;
+    left:0; bottom:-5px;
+    border-width:5px 3px 0 3px;
+    border-style:solid;
+    border-color:var(--red-deep) var(--red-deep) transparent transparent;
+  }
+
+  .card-checkbox{
+    position:absolute;
+    top:8px; right:8px;
+    z-index:3;
+    width:22px; height:22px;
+    accent-color:var(--red-deep);
+    cursor:pointer;
+    background:#fff;
+    border-radius:3px;
+  }
+
+  .card.is-selected{
+    border-color:var(--red-deep);
+    box-shadow:3px 3px 0 var(--shadow), 0 0 0 2px rgba(192,57,43,0.18);
+  }
+
+  .img-wrap{
+    background:#fff;
+    height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-bottom:1px dashed var(--paper-line);
+    position:relative;
+    overflow:hidden;
+  }
+  .img-wrap img{
+    max-width:88%;
+    max-height:88%;
+    object-fit:contain;
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,0.08));
+  }
+  .img-wrap .placeholder{
+    font-size:38px;
+    color:var(--paper-line);
+  }
+  .img-wrap .spinner{
+    width:22px; height:22px;
+    border:2.5px solid var(--paper-line);
+    border-top-color:var(--gold);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .card-body{
+    padding:12px 14px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1;
+  }
+  .pname{
+    font-size:13.5px;
+    line-height:1.4;
+    font-weight:700;
+    min-height:2.6em;
+    color:var(--ink);
+  }
+  .pname.unresolved{
+    color:var(--ink-soft);
+    font-weight:400;
+    font-style:italic;
+  }
+  .barcode-row{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    letter-spacing:0.04em;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .barcode-row::before{
+    content:"|||";
+    letter-spacing:-1px;
+    color:var(--ink);
+  }
+
+  .price-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-top:auto;
+    padding-top:8px;
+    border-top:1px solid var(--paper-line);
+  }
+  .unit-price{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .unit-price b{
+    font-size:15px;
+    color:var(--red-deep);
+    font-weight:900;
+  }
+  .unit-price .limit-note{
+    display:block;
+    font-size:9.5px;
+    color:#9a9182;
+    margin-top:2px;
+  }
+
+  .qty-control{
+    display:flex;
+    align-items:center;
+    gap:0;
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .qty-control button{
+    width:26px; height:26px;
+    border:none;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    line-height:1;
+  }
+  .qty-control button:hover{ background:var(--gold); color:#fff; }
+  .qty-control button:active{ background:var(--red-deep); color:#fff; }
+  .qty-control input{
+    width:34px;
+    text-align:center;
+    border:none;
+    border-left:1.5px solid var(--ink);
+    border-right:1.5px solid var(--ink);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:700;
+    padding:5px 0;
+    background:#fff;
+    color:var(--ink);
+  }
+  .qty-control input:focus{ outline:none; background:#fdf6e3; }
+
+  .subtotal-line{
+    font-size:11px;
+    text-align:right;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .subtotal-line b{
+    color:var(--ink);
+    font-size:13px;
+  }
+
+  /* ---------- Footer summary bar ---------- */
+  .summary-bar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:var(--ink);
+    color:var(--paper);
+    box-shadow:0 -4px 16px rgba(0,0,0,0.25);
+    z-index:50;
+  }
+  .summary-inner{
+    max-width:1180px;
+    margin:0 auto;
+    padding:14px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .summary-inner::before{
+    content:"";
+  }
+  .summary-left{
+    font-size:12px;
+    color:#c9c2b3;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .summary-left .count-line b{ color:#fff; font-size:14px; }
+  .summary-right{
+    text-align:right;
+  }
+  .summary-right .label{
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:#c9c2b3;
+    text-transform:uppercase;
+  }
+  .summary-right .total{
+    font-size:clamp(24px, 4vw, 34px);
+    font-weight:900;
+    color:#ffd28a;
+    font-family:'Georgia', serif;
+    line-height:1.1;
+  }
+  .summary-right .total .yen{
+    font-size:0.55em;
+    margin-right:4px;
+    color:#e8b86d;
+  }
+
+  .reset-btn{
+    background:none;
+    border:1px solid #6b6354;
+    color:#c9c2b3;
+    font-size:11px;
+    padding:6px 12px;
+    border-radius:2px;
+    cursor:pointer;
+    font-family:inherit;
+    letter-spacing:0.05em;
+  }
+  .reset-btn:hover{ border-color:var(--red); color:#fff; background:rgba(192,57,43,0.25); }
+
+  footer.note{
+    max-width:1180px;
+    margin:30px auto 0;
+    padding:0 18px;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:center;
+    line-height:1.7;
+  }
+
+  @media (max-width:480px){
+    .grid{ grid-template-columns:repeat(2, 1fr); gap:12px; }
+    .img-wrap{ height:120px; }
+    .summary-right .total{ font-size:24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Shopping Receipt Dashboard</div>
+  <h1>買い物リスト<span class="jp">TOKYO SHOP LIST ・ 商品一覧</span></h1>
+  <div class="meta-row">
+    <span>品項數 <b id="itemCount">--</b> 件</span>
+    <span>商品圖片已載入 <b id="imgStatus">0/0</b></span>
+  </div>
+  <div class="select-all-row">
+    <label>
+      <input type="checkbox" id="selectAllChk">
+      全選 / 全取消（依各商品上限數量勾選）
+    </label>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <footer class="note">
+    商品圖片與名稱讀取自本機 <code>images/</code> 資料夾（依 barcode 對應）。<br>
+    若某商品查無圖片檔，將顯示 📦 與條碼編號。<br>
+    已選購的數量會自動暫存在瀏覽器（localStorage），重新整理頁面也不會消失。
+  </footer>
+</main>
+
+<div class="summary-bar">
+  <div class="summary-inner">
+    <div class="summary-left">
+      <div class="count-line">已選購 <b id="selectedCount">0</b> / <span id="totalSkuCount">0</span> 種商品</div>
+      <button class="reset-btn" id="resetBtn">全部清零</button>
+    </div>
+    <div class="summary-right">
+      <div class="label" id="summaryLabel">總額 TOTAL</div>
+      <div class="total"><span class="yen">¥</span><span id="totalAmount">0</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------
+// 1. 商品資料（從 CSV 轉入）
+// ---------------------------------------------------------
+const PRODUCTS = [
+  {code:"4700000502318", number:1, price:11105, image:null, name:null},
+  {code:"4902750773059", number:3, price:98, image:"4902750773059_コロロ清水白桃.jpg", name:"コロロ清水白桃"},
+  {code:"4901351002438", number:2, price:166, image:"4901351002438_抹茶ラテ.jpg", name:"抹茶ラテ"},
+  {code:"4901351058640", number:1, price:120, image:"4901351058640_Puré gummy.jpg", name:"Puré gummy"},
+  {code:"4973167516850", number:1, price:650, image:"4973167516850_日本 ♥ KATE The Eye Color 凱特 眼影盤 #66 玫瑰粉 ケイト ザ アイカラー.png", name:"日本 ♥ KATE The Eye Color 凱特 眼影盤 #66 玫瑰粉 ケイト ザ アイカラー"},
+  {code:"4973167376119", number:1, price:650, image:"4973167376119_KATE The Eye Color Matte.webp", name:"KATE The Eye Color Matte"},
+  {code:"4903301138525", number:1, price:743, image:"4903301138525_休足時間.jpeg", name:"休足時間"},
+  {code:"4901326130555", number:1, price:166, image:"4901326130555_◆春日井 キシリクリスタル フルーツアソートのど飴 67g.jpeg", name:"◆春日井 キシリクリスタル フルーツアソートのど飴 67g"},
+  {code:"4975658016733", number:6, price:147, image:"4975658016733_[野村煎豆] 美樂圓餅120g.jpeg", name:"[野村煎豆] 美樂圓餅120g"},
+  {code:"4901550269410", number:6, price:120, image:"4901550269410_Bonbon raisin.jpg", name:"Bonbon raisin"},
+  {code:"4903939015496", number:2, price:129, image:"4903939015496_柑橘皮糖.jpg", name:"柑橘皮糖"},
+  {code:"4902750675841", number:2, price:120, image:"4902750675841_UHA 忍者單株汽水口味味覺糖.jpeg", name:"UHA 忍者單株汽水口味味覺糖"},
+  {code:"4901550269403", number:1, price:120, image:"4901550269403_Gummy Apple.jpg", name:"Gummy Apple"},
+  {code:"4562192368086", number:1, price:1116, image:"4562192368086_やわらか干し梅（富士山）１８０ｇ.webp", name:"やわらか干し梅（富士山）１８０ｇ"},
+  {code:"4903032243819", number:1, price:259, image:"4903032243819_ブラックサンダーミニバー.jpg", name:"ブラックサンダーミニバー"},
+  {code:"4901313205600", number:1, price:278, image:"4901313205600_龜田綜合米果120g.jpeg", name:"龜田綜合米果120g"},
+  {code:"4903032243765", number:1, price:259, image:"4903032243765_雷神草莓風味迷你棒110g x 2.jpeg", name:"雷神草莓風味迷你棒110g x 2"},
+  {code:"4901360364435", number:1, price:324, image:"4901360364435_濃厚チョコブラウニー.jpg", name:"濃厚チョコブラウニー"},
+  {code:"4975162903833", number:1, price:306, image:"4975162903833_草莓風味洋菓子120g x 2.jpeg", name:"草莓風味洋菓子120g x 2"},
+  {code:"4946842527373", number:1, price:213, image:"4946842527373_ASAHI 草莓糖84g.jpeg", name:"ASAHI 草莓糖84g"},
+  {code:"4902124681980", number:1, price:231, image:"4902124681980_我的牛奶糖[哈密瓜風味] 80g x 6.jpeg", name:"我的牛奶糖[哈密瓜風味] 80g x 6"},
+  {code:"4946842540099", number:2, price:213, image:"4946842540099_濃厚芒果風味糖80g x 8.jpeg", name:"濃厚芒果風味糖80g x 8"},
+  {code:"4901326130548", number:1, price:166, image:"4901326130548_春日井牛奶薄荷喉糖71g.jpeg", name:"春日井牛奶薄荷喉糖71g"},
+  {code:"4946842529209", number:1, price:147, image:"4946842529209_Mitsuya Cider Hard Candy.jpg", name:"Mitsuya Cider Hard Candy"},
+  {code:"4571157252674", number:1, price:185, image:"4571157252674_ ORIHIRO蒟蒻果凍粒12入-芒果&白桃240g.jpeg", name:"ORIHIRO蒟蒻果凍粒12入-芒果&白桃240g"},
+  {code:"4571157250762", number:1, price:185, image:"4571157250762_ ORIHIRO果凍[蘇打&可樂] .jpeg", name:"ORIHIRO果凍[蘇打&可樂]"},
+  {code:"4901550267393", number:1, price:185, image:"4901550267393_Tough Gummy タフグミ コーラ エナジードリンク ソーダ.jpg", name:"Tough Gummy タフグミ コーラ エナジードリンク ソーダ"},
+  {code:"4902888275265", number:3, price:138, image:"4902888275265_森永嗨啾Premium 軟糖.jpeg", name:"森永嗨啾Premium 軟糖"},
+  {code:"4902124073006", number:2, price:138, image:"4902124073006_Nobel 諾貝爾製菓閃亮柔軟星形軟糖蘇打風味50g.jpeg", name:"Nobel 諾貝爾製菓閃亮柔軟星形軟糖蘇打風味50g"},
+  {code:"4902750741256", number:3, price:98, image:"4902750741256_Joo melon.jpg", name:"Joo melon"},
+  {code:"4902750615113", number:1, price:120, image:"4902750615113_UHA 味覺糖忍者食軟糖巨峰口味20g.jpeg", name:"UHA 味覺糖忍者食軟糖巨峰口味20g"},
+  {code:"4946842520961", number:1, price:147, image:"4946842520961_可爾必思水果糖100g.jpeg", name:"可爾必思水果糖100g"},
+  {code:"4901351013397", number:1, price:166, image:"4901351013397_金のミルク濃い贅沢1粒.jpg", name:"金のミルク濃い贅沢1粒"},
+  {code:"4901351002445", number:1, price:166, image:"4901351002445_金のミルクキャンディ カフェラテ.jpeg", name:"金のミルクキャンディ カフェラテ"},
+  {code:"4902105022122", number:1, price:213, image:"4902105022122_Nouilles sautees instantanees UFO.jpg", name:"Nouilles sautees instantanees UFO"},
+];
+
+const grid = document.getElementById('grid');
+document.getElementById('itemCount').textContent = PRODUCTS.length;
+document.getElementById('totalSkuCount').textContent = PRODUCTS.length;
+
+let imgDone = 0;
+const imgStatusEl = document.getElementById('imgStatus');
+function bumpImgStatus(){
+  imgDone++;
+  imgStatusEl.textContent = `${imgDone}/${PRODUCTS.length}`;
+}
+
+// ---------------------------------------------------------
+// 2. 建立商品卡
+// ---------------------------------------------------------
+PRODUCTS.forEach((p, idx) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.idx = idx;
+
+  const displayName = p.name || `商品 (${p.code})`;
+  const nameClass = p.name ? 'pname' : 'pname unresolved';
+
+  card.innerHTML = `
+    <div class="tag">上限 ${p.number}</div>
+    <input type="checkbox" class="card-checkbox" id="chk-${idx}" data-idx="${idx}">
+    <div class="img-wrap" id="imgwrap-${idx}"></div>
+    <div class="card-body">
+      <div class="${nameClass}" id="pname-${idx}">${displayName}</div>
+      <div class="barcode-row">${p.code}</div>
+      <div class="price-row">
+        <div class="unit-price">單價<br><b>¥${p.price.toLocaleString()}</b><span class="limit-note">最多可選 ${p.number} 件</span></div>
+        <div class="qty-control">
+          <button data-act="dec" data-idx="${idx}">−</button>
+          <input type="number" min="0" max="${p.number}" value="0" id="qty-${idx}" data-idx="${idx}">
+          <button data-act="inc" data-idx="${idx}">＋</button>
+        </div>
+      </div>
+      <div class="subtotal-line">小計 ¥<b id="sub-${idx}">0</b></div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+// ---------------------------------------------------------
+// 3. 載入商品圖片與名稱（讀取本地 images/ 資料夾）
+// ---------------------------------------------------------
+
+// 圖片資料夾路徑（與本 HTML 同層級）
+const IMAGE_DIR = 'images/';
+
+// 直接設定圖片 src 指向本地 images/ 資料夾；若該商品無對應圖片，
+// 或圖片實際載入失敗（例如檔案不存在/檔名打錯），顯示 📦 佔位圖。
+// 注意：檔名可能包含 # & ? 空格等特殊字元，必須做 URL encode，
+// 否則例如 "#66" 會被瀏覽器當成 URL fragment，導致路徑被截斷。
+function loadLocalImage(wrap, filename, altText){
+  if(!filename){
+    wrap.innerHTML = `<div class="placeholder">📦</div>`;
+    return;
+  }
+  const safeAlt = String(altText).replace(/"/g, '&quot;');
+  const src = IMAGE_DIR + encodeURIComponent(filename);
+  wrap.innerHTML = `<img src="${src}" alt="${safeAlt}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;placeholder&quot;>📦</div>'">`;
+}
+
+function loadProductInfo(p, idx){
+  const wrap = document.getElementById(`imgwrap-${idx}`);
+  loadLocalImage(wrap, p.image, p.name || p.code);
+  bumpImgStatus();
+}
+
+PRODUCTS.forEach((p, idx) => loadProductInfo(p, idx));
+
+// ---------------------------------------------------------
+// 4. 數量控制 + checkbox 連動 + 小計 + 總額
+// ---------------------------------------------------------
+function clampQty(idx, qty){
+  const max = PRODUCTS[idx].number;
+  if(isNaN(qty) || qty < 0) qty = 0;
+  if(qty > max) qty = max;
+  return qty;
+}
+
+function syncCheckbox(idx){
+  const qty = parseInt(document.getElementById(`qty-${idx}`).value, 10) || 0;
+  const chk = document.getElementById(`chk-${idx}`);
+  const card = document.querySelector(`.card[data-idx="${idx}"]`);
+  chk.checked = qty > 0;
+  card.classList.toggle('is-selected', qty > 0);
+}
+
+function updateRow(idx){
+  const input = document.getElementById(`qty-${idx}`);
+  let qty = clampQty(idx, parseInt(input.value, 10));
+  input.value = qty;
+  const sub = qty * PRODUCTS[idx].price;
+  document.getElementById(`sub-${idx}`).textContent = sub.toLocaleString();
+  syncCheckbox(idx);
+  updateSummary();
+}
+
+function updateSummary(){
+  let total = 0;
+  let selected = 0;
+  let anySelected = false;
+
+  PRODUCTS.forEach((p, idx) => {
+    const qty = parseInt(document.getElementById(`qty-${idx}`).value, 10) || 0;
+    total += qty * p.price;
+    if(qty > 0){ selected++; anySelected = true; }
+  });
+
+  const label = document.getElementById('summaryLabel');
+  const totalEl = document.getElementById('totalAmount');
+
+  if(!anySelected){
+    // 全部為零 -> 顯示「總額」：所有商品依上限數量計算的總價
+    const grandTotal = PRODUCTS.reduce((sum, p) => sum + p.price * p.number, 0);
+    label.textContent = '總額 TOTAL（依上限估算）';
+    totalEl.textContent = grandTotal.toLocaleString();
+  } else {
+    label.textContent = '已選取金額 SELECTED';
+    totalEl.textContent = total.toLocaleString();
+  }
+
+  document.getElementById('selectedCount').textContent = selected;
+
+  // 同步全選 checkbox 狀態
+  const allMaxed = PRODUCTS.every((p, idx) => {
+    const qty = parseInt(document.getElementById(`qty-${idx}`).value, 10) || 0;
+    return qty === p.number;
+  });
+  const allZero = !anySelected;
+  const selectAllChk = document.getElementById('selectAllChk');
+  selectAllChk.checked = allMaxed;
+  selectAllChk.indeterminate = !allMaxed && !allZero;
+}
+
+// ---------------------------------------------------------
+// 5. 暫存選購數量到 localStorage（依 barcode 儲存，重整頁面不會消失）
+// ---------------------------------------------------------
+const STORAGE_KEY = 'tokyoShopDashboard.quantities';
+
+function loadSavedQuantities(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){
+    return {};
+  }
+}
+
+function saveQuantities(){
+  try{
+    const data = {};
+    PRODUCTS.forEach((p, idx) => {
+      const qty = parseInt(document.getElementById(`qty-${idx}`).value, 10) || 0;
+      if(qty > 0) data[p.code] = qty;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e){
+    // localStorage 不可用（例如隱私模式滿額）時靜默失敗，不影響其他功能
+  }
+}
+
+function restoreSavedQuantities(){
+  const saved = loadSavedQuantities();
+  if(Object.keys(saved).length === 0) return;
+  PRODUCTS.forEach((p, idx) => {
+    if(saved[p.code] != null){
+      document.getElementById(`qty-${idx}`).value = clampQty(idx, saved[p.code]);
+    }
+  });
+}
+
+grid.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  const idx = btn.dataset.idx;
+  const input = document.getElementById(`qty-${idx}`);
+  let qty = parseInt(input.value, 10) || 0;
+  if(btn.dataset.act === 'inc') qty++;
+  if(btn.dataset.act === 'dec') qty = Math.max(0, qty - 1);
+  input.value = qty;
+  updateRow(idx);
+  saveQuantities();
+});
+
+grid.addEventListener('input', (e) => {
+  if(e.target.matches('input[type="number"]')){
+    updateRow(e.target.dataset.idx);
+    saveQuantities();
+  }
+});
+
+grid.addEventListener('change', (e) => {
+  if(e.target.matches('.card-checkbox')){
+    const idx = e.target.dataset.idx;
+    const input = document.getElementById(`qty-${idx}`);
+    input.value = e.target.checked ? PRODUCTS[idx].number : 0;
+    updateRow(idx);
+    saveQuantities();
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  PRODUCTS.forEach((p, idx) => {
+    document.getElementById(`qty-${idx}`).value = 0;
+    updateRow(idx);
+  });
+  saveQuantities();
+});
+
+document.getElementById('selectAllChk').addEventListener('change', (e) => {
+  const checked = e.target.checked;
+  PRODUCTS.forEach((p, idx) => {
+    document.getElementById(`qty-${idx}`).value = checked ? p.number : 0;
+    updateRow(idx);
+  });
+  saveQuantities();
+});
+
+// 還原先前暫存的數量，再依還原結果同步每張卡片的 checkbox 與小計、總額
+restoreSavedQuantities();
+PRODUCTS.forEach((p, idx) => updateRow(idx));
+updateSummary();
+</script>
+
+</body>
+</html>
